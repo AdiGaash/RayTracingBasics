@@ -8,17 +8,9 @@ public class RayTracingSphereManagerSimple : MonoBehaviour
 
 	[Header("References")]
 	[SerializeField] Shader rayTracingShader;
-	[SerializeField, HideInInspector] Shader accumulateShader;
+	[SerializeField] Shader accumulateShader;
 
-	// Lazy initialization of default shader
-	private Shader GetRayTracingShader()
-	{
-		if (rayTracingShader == null)
-		{
-			rayTracingShader = Shader.Find("Custom/RayTracingSpheres");
-		}
-		return rayTracingShader;
-	}
+	
 
 	[Header("Info")]
 	[SerializeField] int numRenderedFrames;
@@ -69,7 +61,7 @@ public class RayTracingSphereManagerSimple : MonoBehaviour
 	void InitFrame()
 	{
 		// Create materials used in blits
-		ShaderHelper.InitMaterial(GetRayTracingShader(), ref rayTracingMaterial);
+		ShaderHelper.InitMaterial(rayTracingShader, ref rayTracingMaterial);
 		ShaderHelper.InitMaterial(accumulateShader, ref accumulateMaterial);
 		// Create result render texture
 		ShaderHelper.CreateRenderTexture(ref resultTexture, Screen.width, Screen.height, FilterMode.Bilinear, ShaderHelper.RGBA_SFloat, "Result");
