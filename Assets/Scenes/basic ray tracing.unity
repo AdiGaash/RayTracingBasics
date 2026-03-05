@@ -662,7 +662,7 @@ Material:
     - _UVSec: 0
     - _ZWrite: 1
     m_Colors:
-    - _Color: {r: 0.24336444, g: 0.67295593, b: 0.65482855, a: 1}
+    - _Color: {r: 0.6745098, g: 0.6355637, b: 0.24313726, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 0.99999994}
     - _EmissionColorUI: {r: 0, g: 0, b: 0, a: 1}
     - _EmissionColorWithMapUI: {r: 1, g: 1, b: 1, a: 1}
@@ -758,7 +758,7 @@ Material:
     - _UVSec: 0
     - _ZWrite: 1
     m_Colors:
-    - _Color: {r: 0.8113208, g: 0.15563057, b: 0.15563057, a: 1}
+    - _Color: {r: 0.8117647, g: 0.63170266, b: 0.15686274, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 0.99999994}
     - _EmissionColorUI: {r: 0, g: 0, b: 0, a: 1}
     - _EmissionColorWithMapUI: {r: 1, g: 1, b: 1, a: 1}
@@ -982,7 +982,7 @@ Material:
     - _UVSec: 0
     - _ZWrite: 1
     m_Colors:
-    - _Color: {r: 0.49728104, g: 0.13794935, b: 0.5849056, a: 1}
+    - _Color: {r: 0.7634721, g: 0.9372549, b: 0.15686274, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 0.99999994}
     - _EmissionColorUI: {r: 0, g: 0, b: 0, a: 1}
     - _EmissionColorWithMapUI: {r: 1, g: 1, b: 1, a: 1}
@@ -1334,7 +1334,7 @@ Material:
     - _UVSec: 0
     - _ZWrite: 1
     m_Colors:
-    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _Color: {r: 0.8805031, g: 0.80345696, b: 0.19659024, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 0.99999994}
     - _EmissionColorUI: {r: 0, g: 0, b: 0, a: 1}
     - _EmissionColorWithMapUI: {r: 1, g: 1, b: 1, a: 1}
@@ -1430,7 +1430,7 @@ Material:
     - _UVSec: 0
     - _ZWrite: 1
     m_Colors:
-    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _Color: {r: 0.7924528, g: 0.6467662, b: 0.09718751, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 0.99999994}
     - _EmissionColorUI: {r: 0, g: 0, b: 0, a: 1}
     - _EmissionColorWithMapUI: {r: 1, g: 1, b: 1, a: 1}
@@ -1654,7 +1654,7 @@ Material:
     - _UVSec: 0
     - _ZWrite: 1
     m_Colors:
-    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _Color: {r: 0.7484276, g: 0.6929966, b: 0.12944491, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 0.99999994}
     - _EmissionColorUI: {r: 0, g: 0, b: 0, a: 1}
     - _EmissionColorWithMapUI: {r: 1, g: 1, b: 1, a: 1}
