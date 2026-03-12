@@ -38,6 +38,11 @@ Shader "Custom/RayTracingSpheres"
 		float3 ViewParams;
 		float4x4 CamLocalToWorldMatrix;
 			
+		// Lighting Settings
+		float4 AmbientLight;
+		float DiffuseIntensity;
+			
+			
 			// --- Structures ---
 			struct Ray
 			{
@@ -156,17 +161,23 @@ Shader "Custom/RayTracingSpheres"
 
 			if (hitInfo.didHit)
 			{
+				// Ambient light component - base illumination
+				float3 ambientContribution = AmbientLight.rgb * AmbientLight.a;
+				
 				// Lambert diffuse: dot product of normal with light direction
 				float3 lightDir = normalize(_WorldSpaceLightPos0.xyz);
-				float lambertIntensity = max(0.0, dot(hitInfo.normal, lightDir));
+				float lambertFactor = max(0.0, dot(hitInfo.normal, lightDir));
+				float3 diffuseContribution = hitInfo.material.colour.rgb * lambertFactor * DiffuseIntensity;
 				
-				// Return color multiplied by lambert factor
-				return hitInfo.material.colour.rgb * lambertIntensity;
+				// Combine ambient and diffuse lighting
+				float3 finalColor = (ambientContribution + diffuseContribution) * hitInfo.material.colour.rgb;
+				
+				return finalColor;
 			}
 			else
 			{
-				// No hit - return black background
-				return float3(0.0, 0.0, 0.0);
+				// No hit - return ambient background color
+				return AmbientLight.rgb * AmbientLight.a * 0.5; // Dimmed for background
 			}
 		}
 

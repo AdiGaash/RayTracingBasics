@@ -10,6 +10,9 @@ public class RayTracingSphereManagerSimple : MonoBehaviour
 	[SerializeField] Shader rayTracingShader;
 	[SerializeField] Shader accumulateShader;
 
+	[Header("Lighting Settings")]
+	[SerializeField] Color ambientColor = new Color(0.2f, 0.2f, 0.3f, 1.0f);
+	[SerializeField] float ambientIntensity = 0.3f;
 	
 
 	[Header("Info")]
@@ -24,6 +27,13 @@ public class RayTracingSphereManagerSimple : MonoBehaviour
 	// Buffers
 	ComputeBuffer sphereBuffer;
 
+	void UpdateLightingParams()
+	{
+		// Set ambient light (RGB + intensity in alpha)
+		Vector4 ambientLight = new Vector4(ambientColor.r, ambientColor.g, ambientColor.b, ambientIntensity);
+		rayTracingMaterial.SetVector("AmbientLight", ambientLight);
+	}
+	
 	void Start()
 	{
 		numRenderedFrames = 0;
@@ -68,6 +78,9 @@ public class RayTracingSphereManagerSimple : MonoBehaviour
 
 		// Update data
 		UpdateCameraParams(Camera.current);
+		
+		UpdateLightingParams();
+
 		CreateSpheres();
 	}
 
