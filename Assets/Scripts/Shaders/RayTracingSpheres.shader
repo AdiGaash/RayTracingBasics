@@ -40,7 +40,7 @@ Shader "Custom/RayTracingSpheres"
 			
 		// Lighting Settings
 		float4 AmbientLight;
-		float DiffuseIntensity;
+		
 			
 			
 			// --- Structures ---
@@ -127,59 +127,99 @@ Shader "Custom/RayTracingSpheres"
 				return hitInfo;
 			}
 
+			
 		// --- Ray Intersection Functions ---
 
-			/// Find the closest sphere intersection for a given ray
-			/// Iterates through all spheres and finds the nearest hit
-			HitInfo CalculateRayCollision(Ray ray)
-			{
-				HitInfo closestHit = (HitInfo)0;
-				closestHit.dst = 1.#INF; // Initialize to infinity (no hit)
-
-				// Check intersection with each sphere
-				for (int i = 0; i < NumSpheres; i++)
-				{
-					Sphere sphere = Spheres[i];
-					HitInfo hitInfo = RaySphere(ray, sphere.position, sphere.radius);
-
-					// Update closest hit if this hit is closer
-					if (hitInfo.didHit && hitInfo.dst < closestHit.dst)
-					{
-						closestHit = hitInfo;
-						closestHit.material = sphere.material;
-					}
-				}
-
-				return closestHit;
-			}
-
-		/// Main ray tracing function - Lambert Diffuse only
-		/// Simple direct lighting with single bounce
-		float3 Trace(Ray ray)
+		/// Calculate if a ray hits any sphere (for shadow testing)
+		/// Returns true if ray is blocked by any sphere, false if clear path
+		bool IsInShadow(Ray shadowRay, float maxDistance)
 		{
-			HitInfo hitInfo = CalculateRayCollision(ray);
+			// Check intersection with each sphere
+			for (int i = 0; i < NumSpheres; i++)
+			{
+				Sphere sphere = Spheres[i];
+				HitInfo hitInfo = RaySphere(shadowRay, sphere.position, sphere.radius);
 
-			if (hitInfo.didHit)
-			{
-				// Ambient light component - base illumination
-				float3 ambientContribution = AmbientLight.rgb * AmbientLight.a;
-				
-				// Lambert diffuse: dot product of normal with light direction
-				float3 lightDir = normalize(_WorldSpaceLightPos0.xyz);
-				float lambertFactor = max(0.0, dot(hitInfo.normal, lightDir));
-				float3 diffuseContribution = hitInfo.material.colour.rgb * lambertFactor * DiffuseIntensity;
-				
-				// Combine ambient and diffuse lighting
-				float3 finalColor = (ambientContribution + diffuseContribution) * hitInfo.material.colour.rgb;
-				
-				return finalColor;
+				// If we hit something between the hit point and light, we're in shadow
+				if (hitInfo.didHit && hitInfo.dst > 0.001 && hitInfo.dst < maxDistance)
+				{
+					return true; // Shadow ray blocked
+				}
 			}
-			else
-			{
-				// No hit - return ambient background color
-				return AmbientLight.rgb * AmbientLight.a * 0.5; // Dimmed for background
-			}
+			return false; // Clear path to light
 		}
+
+		/// Find the closest sphere intersection for a given ray
+		/// Iterates through all spheres and finds the nearest hit
+		HitInfo CalculateRayCollision(Ray ray)
+		{
+			HitInfo closestHit = (HitInfo)0;
+			closestHit.dst = 1.#INF; // Initialize to infinity (no hit)
+
+			// Check intersection with each sphere
+			for (int i = 0; i < NumSpheres; i++)
+			{
+				Sphere sphere = Spheres[i];
+				HitInfo hitInfo = RaySphere(ray, sphere.position, sphere.radius);
+
+				// Update closest hit if this hit is closer
+				if (hitInfo.didHit && hitInfo.dst < closestHit.dst)
+				{
+					closestHit = hitInfo;
+					closestHit.material = sphere.material;
+				}
+			}
+
+			return closestHit;
+		}
+
+	/// Main ray tracing function - Lambert Diffuse with shadows
+	/// Simple direct lighting with shadow ray testing
+	float3 Trace(Ray ray)
+	{
+		HitInfo hitInfo = CalculateRayCollision(ray);
+
+		if (hitInfo.didHit)
+		{
+			// Ambient light component - base illumination
+			float3 ambientContribution = AmbientLight.rgb * AmbientLight.a;
+			
+			// Lambert diffuse: dot product of normal with light direction
+			float3 lightDir = normalize(_WorldSpaceLightPos0.xyz);
+			float lambertFactor = max(0.0, dot(hitInfo.normal, lightDir));
+			
+			// Shadow ray calculation
+			float shadowFactor = 1.0; // Default: no shadow
+			if (lambertFactor > 0.0) // Only cast shadow ray if surface faces light
+			{
+				// Create shadow ray from hit point towards light
+				Ray shadowRay;
+				shadowRay.origin = hitInfo.hitPoint + hitInfo.normal * 0.001; // Small offset to avoid self-intersection
+				shadowRay.dir = lightDir;
+				
+				// Calculate distance to light (assuming directional light at infinite distance)
+				float lightDistance = 1000.0; // Large distance for directional light
+				
+				// Check if shadow ray hits any sphere
+				if (IsInShadow(shadowRay, lightDistance))
+				{
+					shadowFactor = 0.2; // Partial shadow - still some light gets through
+				}
+			}
+			
+			float3 diffuseContribution = hitInfo.material.colour.rgb * lambertFactor * shadowFactor;
+			
+			// Combine ambient and diffuse lighting
+			float3 finalColor = (ambientContribution + diffuseContribution) * hitInfo.material.colour.rgb;
+			
+			return finalColor;
+		}
+		else
+		{
+			// No hit - return ambient background color
+			return AmbientLight.rgb * AmbientLight.a * 0.5; // Dimmed for background
+		}
+	}
 
 		// --- Fragment Shader ---
 		
