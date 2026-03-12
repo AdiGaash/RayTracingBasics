@@ -198,6 +198,15 @@ Shader "Custom/RayTracingSpheres"
 		// Iterative bouncing instead of recursion
 		for (int bounceCount = 0; bounceCount <= MaxBounces; bounceCount++)
 		{
+			
+			// Early exit if ray contribution is too low to matter
+			float contributionMagnitude = dot(rayContribution, rayContribution); // Squared magnitude for performance
+			if (contributionMagnitude < 0.01) // Threshold - adjust as needed
+			{
+				break;
+			}
+			
+			
 			HitInfo hitInfo = CalculateRayCollision(currentRay);
 
 			if (hitInfo.didHit)

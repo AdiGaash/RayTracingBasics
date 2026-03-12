@@ -20,7 +20,7 @@ public class RayTracingSphereManagerSimple : MonoBehaviour
 	[Range(0f, 1f)]
 	public float reflectionStrength = 0.5f;
 
-	[Range(0, 5)]
+	[Range(0, 20)]
 	public int maxBounces = 1;
 
 
