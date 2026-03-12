@@ -40,6 +40,10 @@ Shader "Custom/RayTracingSpheres"
 			
 		// Lighting Settings
 		float4 AmbientLight;
+			
+		// Reflection Settings
+		float ReflectionStrength;
+		int MaxBounces;
 		
 			
 			
@@ -53,6 +57,7 @@ Shader "Custom/RayTracingSpheres"
 			struct RayTracingMaterial
 			{
 				float4 colour;
+				float reflectance; // How reflective the material is (0 = no reflection, 1 = mirror)
 			};
 
 			struct Sphere
@@ -172,56 +177,103 @@ Shader "Custom/RayTracingSpheres"
 
 			return closestHit;
 		}
-
-	/// Main ray tracing function - Lambert Diffuse with shadows
-	/// Simple direct lighting with shadow ray testing
-	float3 Trace(Ray ray)
+			
+	float3 Reflect(float3 incidentDir, float3 normal)
 	{
-		HitInfo hitInfo = CalculateRayCollision(ray);
-
-		if (hitInfo.didHit)
+		return incidentDir - 2.0 * dot(incidentDir, normal) * normal;
+	}
+			
+	
+			
+			
+	/// Iterative ray tracing function with reflection support
+	/// Handles both diffuse lighting and reflections with bounce limiting
+	float3 TraceIterative(Ray ray)
+	{
+		float3 finalColor = float3(0, 0, 0);
+		float3 rayContribution = float3(1, 1, 1); // How much this ray contributes to final color
+		
+		Ray currentRay = ray;
+		
+		// Iterative bouncing instead of recursion
+		for (int bounceCount = 0; bounceCount <= MaxBounces; bounceCount++)
 		{
-			// Ambient light component - base illumination
-			float3 ambientContribution = AmbientLight.rgb * AmbientLight.a;
-			
-			// Lambert diffuse: dot product of normal with light direction
-			float3 lightDir = normalize(_WorldSpaceLightPos0.xyz);
-			float lambertFactor = max(0.0, dot(hitInfo.normal, lightDir));
-			
-			// Shadow ray calculation
-			float shadowFactor = 1.0; // Default: no shadow
-			if (lambertFactor > 0.0) // Only cast shadow ray if surface faces light
+			HitInfo hitInfo = CalculateRayCollision(currentRay);
+
+			if (hitInfo.didHit)
 			{
-				// Create shadow ray from hit point towards light
-				Ray shadowRay;
-				shadowRay.origin = hitInfo.hitPoint + hitInfo.normal * 0.001; // Small offset to avoid self-intersection
-				shadowRay.dir = lightDir;
-				
-				// Calculate distance to light (assuming directional light at infinite distance)
-				float lightDistance = 1000.0; // Large distance for directional light
-				
-				// Check if shadow ray hits any sphere
-				if (IsInShadow(shadowRay, lightDistance))
+				// --- Diffuse Lighting Calculation ---
+			
+				// Ambient light component - base illumination
+				float3 ambientContribution = AmbientLight.rgb * AmbientLight.a;
+			
+				// Lambert diffuse: dot product of normal with light direction
+				float3 lightDir = normalize(_WorldSpaceLightPos0.xyz);
+				float lambertFactor = max(0.0, dot(hitInfo.normal, lightDir));
+			
+				// Shadow ray calculation
+				float shadowFactor = 1.0; // Default: no shadow
+				if (lambertFactor > 0.0) // Only cast shadow ray if surface faces light
 				{
-					shadowFactor = 0.2; // Partial shadow - still some light gets through
+					// Create shadow ray from hit point towards light
+					Ray shadowRay;
+					shadowRay.origin = hitInfo.hitPoint + hitInfo.normal * 0.001; // Small offset to avoid self-intersection
+					shadowRay.dir = lightDir;
+				
+					// Calculate distance to light (assuming directional light at infinite distance)
+					float lightDistance = 1000.0; // Large distance for directional light
+				
+					// Check if shadow ray hits any sphere
+					if (IsInShadow(shadowRay, lightDistance))
+					{
+						shadowFactor = 0.2; // Partial shadow - still some light gets through
+					}
+				}
+			
+				float3 diffuseContribution = hitInfo.material.colour.rgb * lambertFactor * shadowFactor;
+				float3 diffuseColor = (ambientContribution + diffuseContribution) * hitInfo.material.colour.rgb;
+			
+				// Add diffuse contribution to final color
+				finalColor += rayContribution * diffuseColor * (1.0 - hitInfo.material.reflectance * ReflectionStrength);
+			
+				// --- Reflection Setup for Next Iteration ---
+			
+				// Only continue if material is reflective and we haven't exceeded bounce limit
+				if (hitInfo.material.reflectance > 0.0 && bounceCount < MaxBounces)
+				{
+					// Calculate reflection ray direction
+					float3 reflectionDir = Reflect(currentRay.dir, hitInfo.normal);
+				
+					// Setup next ray for next iteration
+					currentRay.origin = hitInfo.hitPoint + hitInfo.normal * 0.001; // Small offset to avoid self-intersection
+					currentRay.dir = normalize(reflectionDir);
+					
+					// Update contribution factor for next bounce
+					rayContribution *= hitInfo.material.reflectance * ReflectionStrength;
+				}
+				else
+				{
+					// No more reflections - end the loop
+					break;
 				}
 			}
-			
-			float3 diffuseContribution = hitInfo.material.colour.rgb * lambertFactor * shadowFactor;
-			
-			// Combine ambient and diffuse lighting
-			float3 finalColor = (ambientContribution + diffuseContribution) * hitInfo.material.colour.rgb;
-			
-			return finalColor;
+			else
+			{
+				// No hit - add ambient background color and end
+				finalColor += rayContribution * AmbientLight.rgb * AmbientLight.a * 0.5; // Dimmed for background
+				break;
+			}
 		}
-		else
-		{
-			// No hit - return ambient background color
-			return AmbientLight.rgb * AmbientLight.a * 0.5; // Dimmed for background
-		}
+		
+		return finalColor;
 	}
 
-		// --- Fragment Shader ---
+	float3 Trace(Ray ray)
+	{
+		return TraceIterative(ray);
+	}
+			
+			// --- Fragment Shader ---
 		
 		/// Main fragment shader - runs once per pixel
 		/// Shoots a single ray and calculates Lambert diffuse lighting

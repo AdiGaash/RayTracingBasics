@@ -15,6 +15,16 @@ public class RayTracingSphereManagerSimple : MonoBehaviour
 	[SerializeField] float ambientIntensity = 0.3f;
 	
 
+	// Add these properties to your RayTracingSphereManagerSimple script
+	[Header("Reflection Settings")]
+	[Range(0f, 1f)]
+	public float reflectionStrength = 0.5f;
+
+	[Range(0, 5)]
+	public int maxBounces = 1;
+
+
+	
 	[Header("Info")]
 	[SerializeField] int numRenderedFrames;
 	[SerializeField] int numSpheres;
@@ -80,7 +90,8 @@ public class RayTracingSphereManagerSimple : MonoBehaviour
 		UpdateCameraParams(Camera.current);
 		
 		UpdateLightingParams();
-
+		UpdateReflectionParams();
+		
 		CreateSpheres();
 	}
 
@@ -92,6 +103,12 @@ public class RayTracingSphereManagerSimple : MonoBehaviour
 		// Send data to shader
 		rayTracingMaterial.SetVector("ViewParams", new Vector3(planeWidth, planeHeight, focusDistance));
 		rayTracingMaterial.SetMatrix("CamLocalToWorldMatrix", cam.transform.localToWorldMatrix);
+	}
+	
+	void UpdateReflectionParams()
+	{
+		rayTracingMaterial.SetFloat("ReflectionStrength", reflectionStrength);
+		rayTracingMaterial.SetInt("MaxBounces", maxBounces);
 	}
 
 	void CreateSpheres()
